@@ -1,5 +1,0 @@
-pyusb
-pyserial
-
-[pyqt5]
-pyqt5

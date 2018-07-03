@@ -44,6 +44,9 @@ static uint8_t base_address[] = {0,0,0,0,0,0,0xcf,0xbc};
 #define ANSWER 0x02
 #define FINAL 0x03
 #define REPORT 0x04 // Report contains all measurement from the anchor
+#define RELAY 0x05 // CYPHY : Relay information to a drone / main-station
+
+#define MESSAGE_LEN 28 // CYPHY : Max length of message received from drone
 
 typedef struct {
   uint8_t pollRx[5];
@@ -55,6 +58,11 @@ typedef struct {
   float asl;
   uint8_t pressure_ok;
 } __attribute__((packed)) reportPayload_t;
+
+// CYPHY
+typedef struct {
+  char msgRx[MESSAGE_LEN]; // Drone's message
+} __attribute__((packed)) relayPayload_t;
 
 typedef union timestamp_u {
   uint8_t raw[5];
@@ -76,6 +84,9 @@ static dwTime_t answer_tx;
 static dwTime_t answer_rx;
 static dwTime_t final_tx;
 static dwTime_t final_rx;
+
+// For storing message from drone
+static char message_rx[MESSAGE_LEN];
 
 static const double C = 299792458.0;       // Speed of light
 static const double tsfreq = 499.2e6 * 128;  // Timestamp counter frequency
@@ -139,6 +150,7 @@ static void rxcallback(dwDevice_t *dev) {
   switch(rxPacket.payload[TYPE]) {
     // Tag received messages
     case ANSWER:
+    {
       debug("ANSWER\r\n");
 
       if (rxPacket.payload[SEQ] != curr_seq) {
@@ -159,6 +171,7 @@ static void rxcallback(dwDevice_t *dev) {
       arival.full -= (ANTENNA_DELAY/2);
       answer_rx = arival;
       break;
+    }
     case REPORT:
     {
       reportPayload_t *report = (reportPayload_t *)(rxPacket.payload+2);
@@ -171,9 +184,9 @@ static void rxcallback(dwDevice_t *dev) {
         return;
       }
 
-      memcpy(&poll_rx, &report->pollRx, 5);
-      memcpy(&answer_tx, &report->answerTx, 5);
-      memcpy(&final_rx, &report->finalRx, 5);
+      memcpy(&poll_rx, &report->pollRx, 5); // Drone's pollRx
+      memcpy(&answer_tx, &report->answerTx, 5); // Beacon's answerTx
+      memcpy(&final_rx, &report->finalRx, 5); // Drone's finalRx
 
       printf("%02x%08x ", (unsigned int)poll_tx.high8, (unsigned int)poll_tx.low32);
       printf("%02x%08x\r\n", (unsigned int)poll_rx.high8, (unsigned int)poll_rx.low32);
@@ -203,6 +216,24 @@ static void rxcallback(dwDevice_t *dev) {
       dwGetReceiveTimestamp(dev, &arival);
       arival.full -= (ANTENNA_DELAY/2);
       printf("Total in-air time (ctn): 0x%08x\r\n", (unsigned int)(arival.low32-poll_tx.low32));
+
+      break;
+    }
+    // CYPHY
+    case RELAY:
+    {
+      relayPayload_t *relay = (relayPayload_t *)(rxPacket.payload+2);
+      
+      debug("REPORT\r\n");
+
+      if (rxPacket.payload[SEQ] != curr_seq) {
+        printf("Wrong sequence number!\r\n");
+        return;
+      }
+
+      memcpy(&message_rx, &relay->msgRx, MESSAGE_LEN); // Drone's message
+
+      printf("%s\r\n", message_rx);
 
       break;
     }

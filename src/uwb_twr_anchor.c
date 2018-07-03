@@ -49,6 +49,7 @@ static struct uwbConfig_s config;
 #define ANSWER 0x02
 #define FINAL 0x03
 #define REPORT 0x04 // Report contains all measurement from the anchor
+#define RELAY 0x05 // CYPHY : Relay contains message to relay from Drone to Beacon
 
 typedef struct {
   uint8_t pollRx[5];
@@ -151,6 +152,7 @@ static void rxcallback(dwDevice_t *dev) {
   switch(rxPacket.payload[TYPE]) {
     // Anchor received messages
     case POLL:
+    {
       debug("POLL from %02x at %04x\r\n", rxPacket.sourceAddress[0], (unsigned int)arival.low32);
       rangingTick = HAL_GetTick();
       ledBlink(ledRanging, true);
@@ -183,6 +185,7 @@ static void rxcallback(dwDevice_t *dev) {
       arival.full -= (ANTENNA_DELAY/2);
       poll_rx = arival;
       break;
+    }
     case FINAL:
     {
       if (curr_tag == rxPacket.sourceAddress[0]) {
@@ -228,6 +231,46 @@ static void rxcallback(dwDevice_t *dev) {
       dwSetDefaults(dev);
       dwStartReceive(dev);
 
+      break;
+    }
+    // CYPHY
+    case RELAY:
+    {
+      debug("RELAY from %02x at %04x\r\n", rxPacket.sourceAddress[0], (unsigned int)arival.low32);
+      
+      curr_tag = rxPacket.sourceAddress[0];
+
+      int payloadLength = 2;
+      txPacket.payload[TYPE] = RELAY;
+      txPacket.payload[SEQ] = rxPacket.payload[SEQ];
+
+      // uwbConfig_t *uwbConfig = uwbGetConfig();
+      // if (uwbConfig->positionEnabled) {
+      //   txPacket.payload[LPP_HEADER] = SHORT_LPP;
+      //   txPacket.payload[LPP_TYPE] = LPP_SHORT_ANCHOR_POSITION;
+
+      //   struct lppShortAnchorPosition_s *pos = (struct lppShortAnchorPosition_s*) &txPacket.payload[LPP_PAYLOAD];
+      //   memcpy(pos->position, uwbConfig->position, 3*sizeof(float));
+
+      //   payloadLength += 2 + sizeof(struct lppShortAnchorPosition_s);
+      // }
+
+      txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
+      txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
+      struct lppRelay_s *relay = (struct lppRelay_s*) &txPacket.payload[LPP_PAYLOAD];
+      char* test = "test\0";
+      memcpy(relay->message, &test, MESSAGE_LEN);
+      payloadLength += 2 + sizeof(struct lppRelay_s);
+
+      dwNewTransmit(dev);
+      dwSetDefaults(dev);
+      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+payloadLength);
+
+      dwWaitForResponse(dev, true);
+      dwStartTransmit(dev);
+
+      dwGetReceiveTimestamp(dev, &arival);
+      arival.full -= (ANTENNA_DELAY/2);
       break;
     }
   }

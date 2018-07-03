@@ -36,6 +36,9 @@ void lppHandleShortPacket(char *data, size_t length);
 #define LPP_SHORT_REBOOT 0x02
 #define LPP_SHORT_MODE 0x03
 #define LPP_SHORT_UWB 0x04
+#define LPP_SHORT_RELAY 0x05 // CYPHY
+
+#define MESSAGE_LEN 28
 
 struct lppShortAnchorPosition_s {
   float position[3];
@@ -59,6 +62,11 @@ struct lppShortUWB_s {
   uint8_t enableSmartPower :1;
   uint8_t forceTxPower :1;
   uint32_t txPower;
+} __attribute__((packed));
+
+// CYPHY
+struct lppRelay_s {
+  char message[MESSAGE_LEN];
 } __attribute__((packed));
 
 #endif //__LPP_H__

@@ -1,0 +1,38 @@
+# Rakefile used for running unit tests
+
+HERE = File.expand_path(File.dirname(__FILE__)) + '/'
+
+require 'rake'
+require 'rake/clean'
+require 'rake/testtask'
+require './tools/test/rakefile_helper'
+
+include RakefileHelpers
+
+# Load default configuration, for now
+DEFAULT_CONFIG_FILE = './tools/test/gcc.yml'
+configure_toolchain(DEFAULT_CONFIG_FILE)
+
+task :unit do
+  run_tests(get_unit_test_files)
+end
+
+desc "Generate test summary"
+task :summary do
+  report_summary
+end
+
+desc "Build and test Unity"
+task :all => [:check_submodules, :clean, :unit, :summary]
+task :default => [:clobber, :all]
+task :ci => [:default]
+task :cruise => [:default]
+
+desc "Load configuration"
+task :config, :config_file do |t, args|
+  configure_toolchain(args[:config_file])
+end
+
+desc "Check that git submodules are initialized"
+task :check_submodules
+sh 'python tools/make/check-for-submodules.py'

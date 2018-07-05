@@ -213,6 +213,22 @@ static void rxcallback(dwDevice_t *dev) {
 
         dwWaitForResponse(dev, true);
         dwStartTransmit(dev);
+
+        // CYPHY
+
+        // txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
+        // txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
+        // struct lppRelay_s *relay;
+        // char* test = "TSET\0";
+        // memcpy(relay->message, &test, MESSAGE_LEN);
+
+
+        // dwNewTransmit(dev);
+        // dwSetDefaults(dev);
+        // dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH-sizeof(reportPayload_t)+sizeof(struct lppRelay_s));
+
+        // dwWaitForResponse(dev, true);
+        // dwStartTransmit(dev);
       } else {
         dwNewReceive(dev);
         dwSetDefaults(dev);

@@ -222,7 +222,7 @@ static void rxcallback(dwDevice_t *dev) {
     // CYPHY
     case RELAY:
     {
-      ledOn(ledSync);
+      // ledOn(ledSync);
 
       relayPayload_t *relay = (relayPayload_t *)(rxPacket.payload+2);
       
@@ -234,6 +234,9 @@ static void rxcallback(dwDevice_t *dev) {
       }
 
       memcpy(&message_rx, &relay->msgRx, MESSAGE_LEN); // Drone's message
+      if (message_rx[0]=='T') {
+        ledOn(ledSync);
+      }
 
       printf("%s\r\n", message_rx);
 

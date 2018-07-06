@@ -222,6 +222,8 @@ static void rxcallback(dwDevice_t *dev) {
     // CYPHY
     case RELAY:
     {
+      ledOn(ledSync);
+
       relayPayload_t *relay = (relayPayload_t *)(rxPacket.payload+2);
       
       debug("REPORT\r\n");

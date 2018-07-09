@@ -29,6 +29,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <usbd_conf.h>
+
 #include "cfg.h"
 #include "led.h"
 
@@ -151,6 +153,9 @@ static void rxcallback(dwDevice_t *dev) {
 
   rxPacket.payload[TYPE] = RELAY;
 
+  USBD_DbgLog("From Debug");
+  debug("From other Debug");
+
   switch(rxPacket.payload[TYPE]) {
     // Anchor received messages
     debug("Test\n");
@@ -217,21 +222,6 @@ static void rxcallback(dwDevice_t *dev) {
         dwWaitForResponse(dev, true);
         dwStartTransmit(dev);
 
-        // CYPHY
-
-        // txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
-        // txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
-        // struct lppRelay_s *relay;
-        // char* test = "TSET\0";
-        // memcpy(relay->message, &test, MESSAGE_LEN);
-
-
-        // dwNewTransmit(dev);
-        // dwSetDefaults(dev);
-        // dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH-sizeof(reportPayload_t)+sizeof(struct lppRelay_s));
-
-        // dwWaitForResponse(dev, true);
-        // dwStartTransmit(dev);
       } else {
         dwNewReceive(dev);
         dwSetDefaults(dev);
@@ -255,42 +245,33 @@ static void rxcallback(dwDevice_t *dev) {
     // CYPHY
     case RELAY:
     {
-      ledOn(ledSync);
-      debug("RELAY from %02x at %04x\r\n", rxPacket.sourceAddress[0], (unsigned int)arival.low32);
+      if (USBD_IsSerialConnected()) {
+        ledOn(ledSync);}
       
       curr_tag = rxPacket.sourceAddress[0];
 
-      int payloadLength = 2;
+      int payloadLength = 30;
       txPacket.payload[TYPE] = RELAY;
       txPacket.payload[SEQ] = rxPacket.payload[SEQ];
 
-      // uwbConfig_t *uwbConfig = uwbGetConfig();
-      // if (uwbConfig->positionEnabled) {
-      //   txPacket.payload[LPP_HEADER] = SHORT_LPP;
-      //   txPacket.payload[LPP_TYPE] = LPP_SHORT_ANCHOR_POSITION;
-
-      //   struct lppShortAnchorPosition_s *pos = (struct lppShortAnchorPosition_s*) &txPacket.payload[LPP_PAYLOAD];
-      //   memcpy(pos->position, uwbConfig->position, 3*sizeof(float));
-
-      //   payloadLength += 2 + sizeof(struct lppShortAnchorPosition_s);
-      // }
-
       txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
       txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
-      struct lppRelay_s *relay = (struct lppRelay_s*) &txPacket.payload[LPP_PAYLOAD];
-      memcpy(relay->message, rxPacket.payload, MESSAGE_LEN);
+      // struct lppRelay_s *relay = (struct lppRelay_s*) &txPacket.payload[LPP_PAYLOAD];
+      // memcpy(txPacket.payload + 1, rxPacket.payload + 1, MESSAGE_LEN);
 
-      if (rxPacket.payload[0] == 'T') {
+      txPacket.payload[1] = 'a';
+      txPacket.payload[2] = 'b';
+      txPacket.payload[3] = 'c';
+      txPacket.payload[4] = 'd';
+      txPacket.payload[5] = '\0';
+
+      if (rxPacket.payload[1] == 'm') {
         ledOn(ledRanging);
       }
 
-      // char* test = "Test\0";
-      // memcpy(relay->message, &test, MESSAGE_LEN);
-      payloadLength += 2 + sizeof(struct lppRelay_s);
-
       dwNewTransmit(dev);
       dwSetDefaults(dev);
-      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+sizeof(struct lppRelay_s));
+      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+sizeof(struct lppRelay_s)+10);
 
       dwWaitForResponse(dev, true);
       dwStartTransmit(dev);

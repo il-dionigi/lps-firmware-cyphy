@@ -51,7 +51,8 @@ static struct uwbConfig_s config;
 #define ANSWER 0x02
 #define FINAL 0x03
 #define REPORT 0x04 // Report contains all measurement from the anchor
-#define RELAY 0x05 // CYPHY : Relay contains message to relay from Drone to Beacon
+#define RELAY_D2B 0x05 // CYPHY : Relay contains message from Drone to Beacon
+#define RELAY_B2D 0x06 // CYPHY : Doesn't actually do a damn thing
 
 typedef struct {
   uint8_t pollRx[5];
@@ -92,6 +93,8 @@ bool pressure_ok;
 
 const double C = 299792458.0;       // Speed of light
 const double tsfreq = 499.2e6 * 128;  // Timestamp counter frequency
+
+const uint8_t PAYLOAD_LENGTH = 30; // Fixed length of payload - CYPHY
 
 #define ANTENNA_OFFSET 154.6   // In meter
 #define ANTENNA_DELAY  (ANTENNA_OFFSET*499.2e6*128)/299792458.0 // In radio tick
@@ -151,14 +154,15 @@ static void rxcallback(dwDevice_t *dev) {
   memcpy(txPacket.destAddress, rxPacket.sourceAddress, 8);
   memcpy(txPacket.sourceAddress, rxPacket.destAddress, 8);
 
-  rxPacket.payload[TYPE] = RELAY;
+  // rxPacket.payload[TYPE] = RELAY_D2B;
 
-  USBD_DbgLog("From Debug");
-  debug("From other Debug");
+  // USBD_DbgLog("From Debug");
+  // debug("From other Debug");
+
+  char receivedMsg[30] = "";
 
   switch(rxPacket.payload[TYPE]) {
     // Anchor received messages
-    debug("Test\n");
     case POLL:
     {
       debug("POLL from %02x at %04x\r\n", rxPacket.sourceAddress[0], (unsigned int)arival.low32);
@@ -243,41 +247,52 @@ static void rxcallback(dwDevice_t *dev) {
       break;
     }
     // CYPHY
-    case RELAY:
-    {
-      if (USBD_IsSerialConnected()) {
-        ledOn(ledSync);}
-      
-      curr_tag = rxPacket.sourceAddress[0];
+    case RELAY_D2B:
+    {      
+      ledBlink(ledSync, true);
 
-      int payloadLength = 30;
-      txPacket.payload[TYPE] = RELAY;
+      txPacket.payload[TYPE] = RELAY_B2D;
       txPacket.payload[SEQ] = rxPacket.payload[SEQ];
 
-      txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
-      txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
+      // txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
+      // txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
       // struct lppRelay_s *relay = (struct lppRelay_s*) &txPacket.payload[LPP_PAYLOAD];
       // memcpy(txPacket.payload + 1, rxPacket.payload + 1, MESSAGE_LEN);
 
-      txPacket.payload[1] = 'a';
-      txPacket.payload[2] = 'b';
-      txPacket.payload[3] = 'c';
-      txPacket.payload[4] = 'd';
-      txPacket.payload[5] = '\0';
+      memcpy(receivedMsg, rxPacket.payload + 2, PAYLOAD_LENGTH - 2);
 
-      if (rxPacket.payload[1] == 'm') {
-        ledOn(ledRanging);
+      if (true) { // some condition to process data under
+        // do something to process the data
+        memcpy(txPacket.payload + 2, receivedMsg, PAYLOAD_LENGTH - 2);
+      } else {
+        char test[4] = "ACK\0";
+        memcpy(txPacket.payload + 2, test, 4);
       }
-
+      
       dwNewTransmit(dev);
       dwSetDefaults(dev);
-      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+sizeof(struct lppRelay_s)+10);
+      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+PAYLOAD_LENGTH);
 
       dwWaitForResponse(dev, true);
       dwStartTransmit(dev);
+      
+      break;
+    }
+    default:
+    {
+      txPacket.payload[TYPE] = 9;
+      txPacket.payload[SEQ] = rxPacket.payload[SEQ];
 
-      dwGetReceiveTimestamp(dev, &arival);
-      arival.full -= (ANTENNA_DELAY/2);
+      char test[4] = "ERR\0";
+      memcpy(txPacket.payload + 2, test, 4);
+      
+      dwNewTransmit(dev);
+      dwSetDefaults(dev);
+      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+PAYLOAD_LENGTH);
+
+      dwWaitForResponse(dev, true);
+      dwStartTransmit(dev);
+      
       break;
     }
   }

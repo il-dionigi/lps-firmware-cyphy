@@ -102,6 +102,7 @@ const uint8_t PAYLOAD_LENGTH = 30; // Fixed length of payload - CYPHY
 static packet_t rxPacket;
 static packet_t txPacket;
 static volatile uint8_t curr_tag = 0;
+static uint8_t gotMsg = 0;
 
 // #define printf(...)
 #define debug(...) // printf(__VA_ARGS__)
@@ -160,7 +161,9 @@ static void rxcallback(dwDevice_t *dev) {
   // debug("From other Debug");
 
   char receivedMsg[30] = "";
-
+  if (gotMsg){
+    rxPacket.payload[TYPE] = RELAY_D2B;
+  }
   switch(rxPacket.payload[TYPE]) {
     // Anchor received messages
     case POLL:
@@ -250,18 +253,13 @@ static void rxcallback(dwDevice_t *dev) {
     case RELAY_D2B:
     {      
       ledBlink(ledSync, true);
-
+      
       txPacket.payload[TYPE] = RELAY_B2D;
       txPacket.payload[SEQ] = rxPacket.payload[SEQ];
 
-      // txPacket.payload[LPP_HEADER] = SHORT_LPP; // 0xF0, might be bad?
-      // txPacket.payload[LPP_TYPE] = LPP_SHORT_RELAY;
-      // struct lppRelay_s *relay = (struct lppRelay_s*) &txPacket.payload[LPP_PAYLOAD];
-      // memcpy(txPacket.payload + 1, rxPacket.payload + 1, MESSAGE_LEN);
-
       memcpy(receivedMsg, rxPacket.payload + 2, PAYLOAD_LENGTH - 2);
 
-      if (true) { // some condition to process data under
+      if (!gotMsg) { // some condition to process data under
         // do something to process the data
         memcpy(txPacket.payload + 2, receivedMsg, PAYLOAD_LENGTH - 2);
       } else {
@@ -276,6 +274,7 @@ static void rxcallback(dwDevice_t *dev) {
       dwWaitForResponse(dev, true);
       dwStartTransmit(dev);
       
+      gotMsg = 1;
       break;
     }
     default:

@@ -105,11 +105,9 @@ uwbConfig_t config;
 #define debug(...) // printf(__VA_ARGS__)
 //CYPHY encrypt stuff.
 bool encryptInit = false;
-static bool encrypt = false;
 static int encryptSent = 0;
-const int CRTP_MAX_DATA_SIZE = 30;
-static char encryptedData[CRTP_MAX_DATA_SIZE*2];
-static char plainData[CRTP_MAX_DATA_SIZE*2];
+static char encryptedData[MESSAGE_LEN*2];
+static char plainData[MESSAGE_LEN*2];
 static Aes aes;
 static byte key[16] = {0x02, 0x01, 0x05, 0x10, 0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10};
 		// iv and key must be 16 bytes

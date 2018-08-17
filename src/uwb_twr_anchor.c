@@ -170,7 +170,7 @@ static void rxcallback(dwDevice_t *dev) {
     {
       debug("POLL from %02x at %04x\r\n", rxPacket.sourceAddress[0], (unsigned int)arival.low32);
       rangingTick = HAL_GetTick();
-      ledBlink(ledRanging, true);`
+      ledBlink(ledRanging, true);
 
       curr_tag = rxPacket.sourceAddress[0];
 

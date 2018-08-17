@@ -59,25 +59,25 @@ OBJS+=src/uwb.o src/uwb_twr_anchor.o src/uwb_sniffer.o src/uwb_twr_tag.o
 OBJS+=src/lpp.o src/uwb_tdoa_anchor2.o src/uwb_tdoa_anchor3.o
 
 # Wolfssl 
-#PROJ_OBJ += aes.o ssl.o #internal.o error-ssl.o coding.o dirent.o stat.o asn.o dh.o
-#PROJ_OBJ += -l$(WOLFSSL)/src #-l$(WOLFSSL)/wolfssl -l$(WOLFSSL)/wolfssl/wolfcrypt
-#PROJ_OBJ += -l$(WOLFSSL)/wolfcrypt/src
+#OBJS += aes.o ssl.o #internal.o error-ssl.o coding.o dirent.o stat.o asn.o dh.o
+#OBJS += -l$(WOLFSSL)/src #-l$(WOLFSSL)/wolfssl -l$(WOLFSSL)/wolfssl/wolfcrypt
+#OBJS += -l$(WOLFSSL)/wolfcrypt/src
 # removed ones
 # crl.o internal.o io.o keys.o ocsp.o sniffer.o ssl.o tls.o
-PROJ_OBJ += ssl.o aes.o #WolfSSL/src
-PROJ_OBJ += arc4.o asm.o asn.o async.o blake2b.o camellia.o chacha.o
-PROJ_OBJ += chacha20_poly1305.o cmac.o coding.o compress.o curve25519.o
-PROJ_OBJ += des3.o dh.o dsa.o ecc_fp.o ecc.o ed25519.o error.o fe_low_mem.o fe_operations.o
-PROJ_OBJ += ge_low_mem.o ge_operations.o hash.o hc128.o hmac.o idea.o 
+OBJS += ssl.o aes.o #WolfSSL/src
+OBJS += arc4.o asm.o asn.o async.o blake2b.o camellia.o chacha.o
+OBJS += chacha20_poly1305.o cmac.o coding.o compress.o curve25519.o
+OBJS += des3.o dh.o dsa.o ecc_fp.o ecc.o ed25519.o error.o fe_low_mem.o fe_operations.o
+OBJS += ge_low_mem.o ge_operations.o hash.o hc128.o hmac.o idea.o 
 
-PROJ_OBJ += crl.o
+OBJS += crl.o
 
-PROJ_OBJ += logging.o md2.o
-PROJ_OBJ += md4.o md5.o memory.o misc.o pkcs12.o pkcs7.o poly1305.o pwdbased.o
-PROJ_OBJ += rabbit.o random.o ripemd.o rsa.o sha.o sha256.o sha512.o signature.o srp.o
-PROJ_OBJ += tfm.o wc_encrypt.o wc_port.o wolfevent.o
+OBJS += logging.o md2.o
+OBJS += md4.o md5.o memory.o misc.o pkcs12.o pkcs7.o poly1305.o pwdbased.o
+OBJS += rabbit.o random.o ripemd.o rsa.o sha.o sha256.o sha512.o signature.o srp.o
+OBJS += tfm.o wc_encrypt.o wc_port.o wolfevent.o
 
-PROJ_OBJ += io.o ocsp.o sniffer.o tls.o keys.o internal.o integer.o
+OBJS += io.o ocsp.o sniffer.o tls.o keys.o internal.o integer.o
 
 HALS+=gpio rcc cortex i2c pcd dma pcd_ex rcc_ex spi uart pwr
 OBJS+=$(foreach mod, $(HALS), $(HAL_ROOT)/Src/stm32$(CPU)xx_hal_$(mod).o)

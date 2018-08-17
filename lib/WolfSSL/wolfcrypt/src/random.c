@@ -1674,15 +1674,15 @@ int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
     }
 
 #elif defined(NO_DEV_RANDOM)
-#include "rng_interface.h"
+//#include "rng_interface.h"
 //#error "you need to write an os specific wc_GenerateSeed() here"
 
-/* this is by default commented away*/
+/* this is by default commented away*//*
 int wc_GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 {
 	rngInit();
 	return getRng(output, sz);
-}
+}*/
 /*PLAN: make layer of seperation between WolfSSL and STM32F4xx_rng.H so*/
 
 

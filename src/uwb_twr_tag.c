@@ -103,15 +103,6 @@ uwbConfig_t config;
 
 // #define printf(...)
 #define debug(...) // printf(__VA_ARGS__)
-//CYPHY encrypt stuff.
-bool encryptInit = false;
-static int encryptSent = 0;
-static char encryptedData[MESSAGE_LEN*2];
-static char plainData[MESSAGE_LEN*2];
-static Aes aes;
-static byte key[16] = {0x02, 0x01, 0x05, 0x10, 0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10};
-		// iv and key must be 16 bytes
-static byte iv[16] = {0x02, 0x01, 0x05, 0x10, 0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10};
 
 static void txcallback(dwDevice_t *dev)
 {
@@ -232,13 +223,6 @@ static void rxcallback(dwDevice_t *dev) {
     // CYPHY
     case RELAY:
     {
-      // ledOn(ledSync);
-      if(!encryptInit){
-        encryptInit = true;
-        wc_AesSetKey(&aes, key, 16, iv, AES_ENCRYPTION);
-      }
-      wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
-      encryptSent++;
       relayPayload_t *relay = (relayPayload_t *)(rxPacket.payload+2);
       
       debug("REPORT\r\n");

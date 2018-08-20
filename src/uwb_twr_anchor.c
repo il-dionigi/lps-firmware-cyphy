@@ -40,6 +40,9 @@
 
 #include "dwOps.h"
 #include "mac.h"
+
+// CYPHY AES Encryption
+#include "aes.h"
  
 uint8_t base_address[] = {0,0,0,0,0,0,0xcf,0xbc};
 
@@ -107,6 +110,15 @@ static uint8_t gotMsg = 0;
 // #define printf(...)
 #define debug(...) // printf(__VA_ARGS__)
 
+//CYPHY encrypt stuff.
+bool encryptInit = false;
+static char encryptedData[MESSAGE_LEN*2];
+static char plainData[MESSAGE_LEN*2];
+static Aes aes;
+static byte key[16] = {0x02, 0x01, 0x05, 0x10, 0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10};
+		// iv and key must be 16 bytes
+static byte iv[16] = {0x02, 0x01, 0x05, 0x10, 0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10,0x02, 0x01, 0x05, 0x10};
+
 static void txcallback(dwDevice_t *dev)
 {
   dwTime_t departure;
@@ -142,7 +154,20 @@ static void rxcallback(dwDevice_t *dev) {
 
   debug("RXCallback(%d): ", dataLength);
 
+  // Pseudo encryption stuff
+  if(!encryptInit){
+    encryptInit = true;
+    wc_AesSetKey(&aes, key, 16, iv, AES_ENCRYPTION);
+  }
+
+  char fakeText[16] = "abcdefghijklmnop";
+  memcpy(plainData, fakeText, 16);
+
   dwGetData(dev, (uint8_t*)&rxPacket, dataLength);
+
+  // In theory would be decrypting a packet of size 30
+  wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
+  wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
 
   if (memcmp(rxPacket.destAddress, config.address, 8)) {
     debug("Not for me! for %02x with %02x\r\n", rxPacket.destAddress[0], rxPacket.payload[0]);
@@ -164,6 +189,7 @@ static void rxcallback(dwDevice_t *dev) {
   if (gotMsg){
     rxPacket.payload[TYPE] = RELAY_D2B;
   }
+  
   switch(rxPacket.payload[TYPE]) {
     // Anchor received messages
     case POLL:
@@ -188,6 +214,10 @@ static void rxcallback(dwDevice_t *dev) {
 
         payloadLength += 2 + sizeof(struct lppShortAnchorPosition_s);
       }
+
+      // Pseudo-encryption - in theory would be a packet of size 30
+      wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
+      wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
 
       dwNewTransmit(dev);
       dwSetDefaults(dev);
@@ -221,6 +251,10 @@ static void rxcallback(dwDevice_t *dev) {
         report->temperature = temperature;
         report->asl = asl;
         report->pressure_ok = pressure_ok;
+
+        // Pseudo-encryption - in theory would be a packet of size 30
+        wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
+        wc_AesCbcEncrypt(&aes, (byte*)encryptedData, (byte*)plainData, 16);
 
         dwNewTransmit(dev);
         dwSetDefaults(dev);

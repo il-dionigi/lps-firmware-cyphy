@@ -18,27 +18,6 @@ else
 $(error Rev.$(REV) unknown)
 endif
 
-#WOLFSSL = src/lib/WolfSSL
-WOLFSSLDEFINES = -DNO_WRITEV -DNO_FILESYSTEM -DNO_DEV_RANDOM -DWOLFSSL_USER_IO -DSINGLE_THREADED -DNO_INLINE
-
-WOLFSSLDEFINES += -DNO_WOLFSSL_CLIENT -DNO_WOLFSSL_SERVER -DNO_DES3 -DNO_DSA -DNO_HMAC -DNO_MD4
-WOLFSSLDEFINES += -DNO_MD5 -DNO_PWDBASED -DNO_RC4 -DNO_SESSION_CACHE
-WOLFSSLDEFINES += -DNO_TLS -DNOWC_NO_RSA_OAEP -DNO_OLD_TLS
-WOLFSSLDEFINES += -DNO_ERROR_STRINGS -DNO_WOLFSSL_MEMORY -DNO_DH -DNO_CODING
-WOLFSSLDEFINES += -DNO_HC128 -DNO_SHA -DNO_RABBIT -DWOLFCRYPT_ONLY
-
-
-WOLFSSLDEFINES += -DHAVE_AESGCM -DHAVE_ECC -DRSA_LOW_MEM -DUSE_FAST_MATH
-
-LIB = lib
-
-# WolfSSL
-VPATH += $(LIB)/WolfSSL/wolfssl
-VPATH += $(LIB)/WolfSSL/wolfssl/wolfcrypt
-VPATH += $(LIB)/WolfSSL/wolfcrypt/src
-VPATH += $(LIB)/WolfSSL/src
-#VPATH += $(LIB)/WolfSSL
-
 INCLUDES=-Iinc -Iinc/$(CPU) -I$(HAL_ROOT)/Inc -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc
 
 # FreeRTOS
@@ -58,27 +37,6 @@ OBJS+=src/cfg.o src/usbcomm.o src/test_support.o src/production_test.o
 OBJS+=src/uwb.o src/uwb_twr_anchor.o src/uwb_sniffer.o src/uwb_twr_tag.o
 OBJS+=src/lpp.o src/uwb_tdoa_anchor2.o src/uwb_tdoa_anchor3.o
 
-# Wolfssl 
-#OBJS += aes.o ssl.o #internal.o error-ssl.o coding.o dirent.o stat.o asn.o dh.o
-#OBJS += -l$(WOLFSSL)/src #-l$(WOLFSSL)/wolfssl -l$(WOLFSSL)/wolfssl/wolfcrypt
-#OBJS += -l$(WOLFSSL)/wolfcrypt/src
-# removed ones
-# crl.o internal.o io.o keys.o ocsp.o sniffer.o ssl.o tls.o
-OBJS += ssl.o aes.o #WolfSSL/src
-OBJS += arc4.o asm.o asn.o async.o blake2b.o camellia.o chacha.o
-OBJS += chacha20_poly1305.o cmac.o coding.o compress.o curve25519.o
-OBJS += des3.o dh.o dsa.o ecc_fp.o ecc.o ed25519.o error.o fe_low_mem.o fe_operations.o
-OBJS += ge_low_mem.o ge_operations.o hash.o hc128.o hmac.o idea.o 
-
-OBJS += crl.o
-
-OBJS += logging.o md2.o
-OBJS += md4.o md5.o memory.o misc.o pkcs12.o pkcs7.o poly1305.o pwdbased.o
-OBJS += rabbit.o random.o ripemd.o rsa.o sha.o sha256.o sha512.o signature.o srp.o
-OBJS += tfm.o wc_encrypt.o wc_port.o wolfevent.o
-
-OBJS += io.o ocsp.o sniffer.o tls.o keys.o internal.o integer.o
-
 HALS+=gpio rcc cortex i2c pcd dma pcd_ex rcc_ex spi uart pwr
 OBJS+=$(foreach mod, $(HALS), $(HAL_ROOT)/Src/stm32$(CPU)xx_hal_$(mod).o)
 OBJS+=$(HAL_ROOT)/Src/stm32$(CPU)xx_hal.o
@@ -90,16 +48,11 @@ OBJS+=$(foreach mod, $(USB_CDC), Middlewares/ST/STM32_USB_Device_Library/Class/C
 
 #libdw1000
 INCLUDES+=-Ivendor/libdw1000/inc
-INCLUDES+= -I$(LIB)/WolfSSL
-INCLUDES+= -I$(LIB)/WolfSSL/src
-INCLUDES+= -I$(LIB)/WolfSSL/wolfssl/
-INCLUDES+= -I$(LIB)/WolfSSL/wolfssl/wolfcrypt
-INCLUDES+= -I$(LIB)/WolfSSL/wolfcrypt/src
 OBJS+=vendor/libdw1000/src/libdw1000.o vendor/libdw1000/src/libdw1000Spi.o
 
 OBJS+=src/dwOps.o
 
-CFLAGS+=$(PROCESSOR) $(INCLUDES) $(WOLFSSLDEFINES) -O3 -g3 -Wall -Wno-pointer-sign -std=gnu11
+CFLAGS+=$(PROCESSOR) $(INCLUDES) -O3 -g3 -Wall -Wno-pointer-sign -std=gnu11
 LDFLAGS+=$(PROCESSOR) --specs=nano.specs --specs=nosys.specs -lm -lc -u _printf_float
 
 ifeq ($(strip $(BOOTLOAD)),0)

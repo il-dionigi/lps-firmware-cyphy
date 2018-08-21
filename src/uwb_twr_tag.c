@@ -36,7 +36,6 @@
 
 #include "dwOps.h"
 #include "mac.h"
-#include "aes.h"
 
 static uint8_t base_address[] = {0,0,0,0,0,0,0xcf,0xbc};
 

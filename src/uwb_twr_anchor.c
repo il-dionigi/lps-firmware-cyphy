@@ -53,6 +53,7 @@ static struct uwbConfig_s config;
 #define REPORT 0x04 // Report contains all measurement from the anchor
 #define RELAY_D2B 0x05 // CYPHY : Relay contains message from Drone to Beacon
 #define RELAY_B2D 0x06 // CYPHY : Doesn't actually do a damn thing
+#define KEY_DELTA 106 // the key, anchor adds this to t3 when data is sent
 
 typedef struct {
   uint8_t pollRx[5];
@@ -169,6 +170,14 @@ static void rxcallback(dwDevice_t *dev) {
     // Anchor received messages
     case POLL:
     {
+		// Add delay ~cyphy~, recieved poll sending answer
+		//uint32_t delay = 100;
+		//for (uint16_t ii = 0; ii < delay; ii++){
+			//each instruction has a few nanosec delay(?)
+		//}
+		//uint32_t delay = 1; //ms
+		//HAL_Delay(delay);
+		
       debug("POLL from %02x at %04x\r\n", rxPacket.sourceAddress[0], (unsigned int)arival.low32);
       rangingTick = HAL_GetTick();
       ledBlink(ledRanging, true);
@@ -216,6 +225,7 @@ static void rxcallback(dwDevice_t *dev) {
         txPacket.payload[TYPE] = REPORT;
         txPacket.payload[SEQ] = rxPacket.payload[SEQ];
         memcpy(&report->pollRx, &poll_rx, 5);
+		answer_tx.low32 += KEY_DELTA; // ~cyphy~
         memcpy(&report->answerTx, &answer_tx, 5);
         memcpy(&report->finalRx, &final_rx, 5);
         report->pressure = pressure;

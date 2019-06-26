@@ -53,7 +53,7 @@ static struct uwbConfig_s config;
 #define REPORT 0x04 // Report contains all measurement from the anchor
 #define RELAY_D2B 0x05 // CYPHY : Relay contains message from Drone to Beacon
 #define RELAY_B2D 0x06 // CYPHY : Doesn't actually do a damn thing
-#define KEY_DELTA 0 // the key, anchor adds this to t3 when data is sent
+uint32_t KEY_DELTA = 0; // the key, anchor adds this to t3 when data is sent
 
 typedef struct {
   uint8_t pollRx[5];
@@ -103,7 +103,6 @@ const uint8_t PAYLOAD_LENGTH = 30; // Fixed length of payload - CYPHY
 static packet_t rxPacket;
 static packet_t txPacket;
 static volatile uint8_t curr_tag = 0;
-static uint8_t gotMsg = 0;
 
 // #define printf(...)
 #define debug(...) // printf(__VA_ARGS__)
@@ -162,9 +161,7 @@ static void rxcallback(dwDevice_t *dev) {
   // debug("From other Debug");
 
   char receivedMsg[30] = "";
-  if (gotMsg){
-    rxPacket.payload[TYPE] = RELAY_D2B;
-  }
+
   
   switch(rxPacket.payload[TYPE]) {
     // Anchor received messages
@@ -269,15 +266,20 @@ static void rxcallback(dwDevice_t *dev) {
       txPacket.payload[SEQ] = rxPacket.payload[SEQ];
 
       memcpy(receivedMsg, rxPacket.payload + 2, PAYLOAD_LENGTH - 2);
-
-      if (!gotMsg) { // some condition to process data under
+	  //change key delta if rxpacket[3:4] = KD
+	  if (receivedMsg[0] == 'K' && receivedMsg[1] == 'D') {
+		  KEY_DELTA = receivedMsg[2];
+	  }
+	  char msgToDrone[6] = "Key: \0";
+	  msgToDrone[4] = KEY_DELTA;
+      /* if () { // some condition to process data under
         // do something to process the data
         memcpy(txPacket.payload + 2, receivedMsg, PAYLOAD_LENGTH - 2);
       } else {
         char test[4] = "ACK\0";
         memcpy(txPacket.payload + 2, test, 4);
-      }
-      
+      }*/
+      memcpy(txPacket.payload + 2, msgToDrone, 6);
       dwNewTransmit(dev);
       dwSetDefaults(dev);
       dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+PAYLOAD_LENGTH);
@@ -285,7 +287,6 @@ static void rxcallback(dwDevice_t *dev) {
       dwWaitForResponse(dev, true);
       dwStartTransmit(dev);
       
-      gotMsg = 1;
       break;
     }
     default:

@@ -1,0 +1,7 @@
+git pull
+make clean
+make
+cp bin/lps-node-firmware.dfu ./lps-node-firmware.dfu
+git add ./lps-node-firmware.dfu
+git commit -m "dfu to bootload"
+git push

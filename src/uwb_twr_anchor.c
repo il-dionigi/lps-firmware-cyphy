@@ -283,24 +283,7 @@ static void rxcallback(dwDevice_t *dev) {
       dwSetDefaults(dev);
       dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+PAYLOAD_LENGTH);
 
-      dwWaitForResponse(dev, true);
-      dwStartTransmit(dev);
-      
-      break;
-    }
-    default:
-    {
-      txPacket.payload[TYPE] = 9;
-      txPacket.payload[SEQ] = rxPacket.payload[SEQ];
-
-      char test[4] = "ERR\0";
-      memcpy(txPacket.payload + 2, test, 4);
-      
-      dwNewTransmit(dev);
-      dwSetDefaults(dev);
-      dwSetData(dev, (uint8_t*)&txPacket, MAC802154_HEADER_LENGTH+2+PAYLOAD_LENGTH);
-
-      dwWaitForResponse(dev, true);
+      dwWaitForResponse(dev, false);
       dwStartTransmit(dev);
       
       break;
